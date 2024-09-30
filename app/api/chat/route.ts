@@ -13,7 +13,7 @@ import {
 } from "./llamaindex/streaming/events";
 import { LlamaIndexStream } from "./llamaindex/streaming/stream";
 import jwt from "jsonwebtoken";
-import {checkThirdPartyPermissions, getPermittedDocuments} from "@/app/api/permissions";
+import {getPermittedDocuments} from "@/app/api/permissions";
 
 initObservability();
 initSettings();
@@ -68,8 +68,7 @@ export async function POST(request: NextRequest) {
     const ids = await getPermittedDocuments(user);
     console.log("fga permitted documents:");
     console.log(ids);
-    const verifiedIds = await checkThirdPartyPermissions(ids, user);
-    const chatEngine = await createChatEngine(verifiedIds);
+    const chatEngine = await createChatEngine(ids);
 
     // Convert message content from Vercel/AI format to LlamaIndex/OpenAI format
     const userMessageContent = convertMessageContent(

@@ -146,10 +146,10 @@ function getUsersOfType(data: any, type: string): Map<string, any>{
     const resMap = new Map();
 
     data.forEach((elem: any) => {
-        let subject = elem.permission;
+        let subject = elem.subject;
 
-        if(subject.permissionType === type){
-            resMap.set(subject.permissionSubject, elem);
+        if(subject.relationshipType === type){
+            resMap.set(subject.subjectId, elem);
         }
     });
     return resMap;
@@ -198,104 +198,3 @@ export async function getPermittedDocuments(userId: string | undefined | (() => 
     }
     return allFiles;
 }
-
-export async function checkThirdPartyPermissions(documentIds: Array<string>, userId: string | undefined | (() => string) = undefined): Promise<Array<string>>{
-    if(userId === undefined){
-        return [];
-    }
-
-    const token = signJwt(userId);
-    const integrations = ["googledrive", "dropbox"];
-    let verifiedIds: Array<string> = []
-
-    for(const integration of integrations){
-        try {
-            let verUrl = "";
-            if (integration === "googledrive") {
-                verUrl = process.env.GOOGLE_DRIVE_VERIFICATION ?? "";
-            } else if (integration === "dropbox") {
-                verUrl = process.env.DROPBOX_VERIFICATION ?? "";
-            }
-            if (verUrl) {
-                let verified = await checkSpecificThirdParty(documentIds, userId, token, integration, verUrl);
-                verifiedIds = verifiedIds.concat(verified);
-            }
-        }catch(err){
-            console.log("Unable to verify " + integration + " : " + err);
-        }
-    }
-    return verifiedIds;
-}
-
-function signJwt(userId: string | undefined | (() => string)): string {
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    return jwt.sign(
-        {
-            sub: userId,
-            iat: currentTime,
-            exp: currentTime + (60 * 60), // 1 hour from now
-        },
-        process.env.SIGNING_KEY?.replaceAll("\\n", "\n") ?? "",
-        {
-            algorithm: "RS256",
-        }
-    )
-}
-
-async function getIntegration(docId: string): Promise<string>{
-    const integrations = ["googledrive", "dropbox"];
-    const fga = getFga();
-
-    for(const integr of integrations){
-        const { allowed } = await fga.check({
-            user: 'integration:' + integr,
-            relation: 'parent',
-            object: 'doc:' + docId,
-        }, {
-            authorizationModelId: process.env.FGA_MODEL_ID,
-        });
-
-        if(allowed){
-            return integr;
-        }
-    }
-    return "No Integration Linked";
-}
-
-async function checkSpecificThirdParty(documentIds: Array<string>,
-                                       userId: string | undefined | (() => string) = undefined,
-                                       jwt: string,
-                                       integration: string,
-                                       verificationUrl: string): Promise<Array<string>>{
-    const docsOfIntegration = await getDocumentsOfIntegration(documentIds, integration);
-
-    const response = await fetch(verificationUrl, {
-        method: "POST",
-        body: JSON.stringify({userId: userId, fileArr: docsOfIntegration}),
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "bearer " + jwt,
-        },
-    })
-        .then((response) => response.json())
-        .catch((error) => console.log("Error checking with " + integration + ": " + error));
-
-    return await response.permittedFiles.map((permittedFile: {fileId: string, permitted: boolean}) => {
-        if(permittedFile.permitted){
-            return permittedFile.fileId;
-        }
-    });
-}
-
-async function getDocumentsOfIntegration(documentIds: Array<string>, integration: string): Promise<Array<string>>{
-    const docsOfIntegration = []
-    for(const id of documentIds){
-        let integr = await getIntegration(id);
-        if(integr == integration){
-            docsOfIntegration.push(id);
-        }
-    }
-    return docsOfIntegration
-}
-
