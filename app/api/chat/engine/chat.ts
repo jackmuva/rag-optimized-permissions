@@ -24,9 +24,10 @@ export async function createChatEngine(documentIds?: string[]) {
   console.log("using context from the following documents");
   console.log(documentIds);
 
+  console.log(permissionFilters);
   const retriever = index.asRetriever({
     similarityTopK: process.env.TOP_K ? parseInt(process.env.TOP_K) : 3,
-    filters: permissionFilters,
+    filters: permissionFilters
   });
 
   return new ContextChatEngine({
