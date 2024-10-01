@@ -2,7 +2,7 @@ import {
   ContextChatEngine,
   MetadataFilter,
   MetadataFilters,
-  Settings, SimpleChatEngine,
+  Settings, SimpleChatEngine
 } from "llamaindex";
 import { getDataSource } from "./index";
 
