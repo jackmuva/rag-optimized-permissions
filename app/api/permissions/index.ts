@@ -26,11 +26,11 @@ export async function writePermissions(fga: OpenFgaClient, data: any, source: st
         object.objectType = "folder";
         object.objectName = object.objectId;
     } else{
-        object.objectType = "doc";
+        object.objectType = "artifact";
     }
 
     if(subject.subjectType === "group"){
-        subject.subjectType = "group";
+        subject.subjectType = "team";
     } else{
         subject.subjectType = "user";
     }
@@ -54,7 +54,7 @@ export async function writePermissions(fga: OpenFgaClient, data: any, source: st
         authorizationModelId: process.env.FGA_MODEL_ID
     });
 
-    if(object.objectType === "doc"){
+    if(object.objectType === "artifact"){
         await writeIntegrationRelationship(fga, source, object.objectId);
     }
 }
@@ -65,7 +65,7 @@ export async function writeIntegrationRelationship(fga: OpenFgaClient, source: s
             {
                 "user": "integration" + ":" + source,
                 "relation":"parent",
-                "object": "doc" + ":" + docId,
+                "object": "artifact" + ":" + docId,
             }
         ],
     }, {
@@ -82,7 +82,7 @@ export async function writeFileRelationship(fga: OpenFgaClient, data: any){
             {
                 "user": "folder" + ":" + subject.subjectId,
                 "relation":"parent",
-                "object": "doc:" + object.objectId
+                "object": "artifact:" + object.objectId
             }
         ],
     }, {
@@ -91,7 +91,7 @@ export async function writeFileRelationship(fga: OpenFgaClient, data: any){
 }
 
 async function deletePermissions(fga: OpenFgaClient, user: string, role: string, docId: string) {
-    let objectType = "doc";
+    let objectType = "artifact";
     let subjectType = "user";
 
     await fga.write({
@@ -158,7 +158,7 @@ function getUsersOfType(data: any, type: string): Map<string, any>{
 async function getPermittedUsers(fga: OpenFgaClient, fileId: string, relationship: string): Promise<Set<string | undefined>>{
     const response = await fga.listUsers({
         object: {
-            type: "doc",
+            type: "artifact",
             id: fileId,
         },
         user_filters: [{
@@ -185,7 +185,7 @@ export async function getPermittedDocuments(userId: string | undefined | (() => 
         const response = await fga.listObjects({
             user: "user:" + userId,
             relation: "can_read",
-            type: "doc",
+            type: "artifact",
         }, {
             authorizationModelId: process.env.FGA_MODEL_ID,
         });
