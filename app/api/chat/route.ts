@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     console.log("logged in user: " + user);
 
-    //gets permitted document IDs using fga graph (managed cache), then checks third party permissions
+    //gets permitted document IDs using fga graph (managed cache)
     const ids = await getPermittedDocuments(user);
     console.log("fga permitted documents:");
     console.log(ids);

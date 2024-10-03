@@ -15,7 +15,6 @@ const ChatSection: React.FC<ChildProps> = (props) => {
   const [headers, setHeader] = useState<any>({"Content-Type": "application/json",})
 
   useEffect(() => {
-    console.log('in effect');
     if(sessionStorage.getItem("jwt")){
       // @ts-ignore
       setHeader({...headers, "Authorization": "Bearer " + sessionStorage.getItem("jwt")});

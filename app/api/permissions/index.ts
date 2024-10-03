@@ -180,13 +180,11 @@ export async function getPermittedDocuments(userId: string | undefined | (() => 
     }
 
     const fga = getFga();
-    const roles = ["owner", "writer", "reader"];
     let allFiles: Array<string> = []
 
-    for(const role of roles){
         const response = await fga.listObjects({
             user: "user:" + userId,
-            relation: role,
+            relation: "can_read",
             type: "doc",
         }, {
             authorizationModelId: process.env.FGA_MODEL_ID,
@@ -195,6 +193,6 @@ export async function getPermittedDocuments(userId: string | undefined | (() => 
         allFiles = allFiles.concat(response.objects.map((document: string) => {
             return document.split(":")[1]
         }));
-    }
+
     return allFiles;
 }

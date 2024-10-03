@@ -1,9 +1,10 @@
 "use client";
 
-import { AuthenticatedConnectUser, paragon } from "@useparagon/connect";
+import { AuthenticatedConnectUser, paragon, SDK_EVENT } from "@useparagon/connect";
 import Login from "@/app/components/integration-ui/login";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { IIntegrationMetadata } from "@/node_modules/@useparagon/connect/dist/src/entities/integration.interface";
+import useParagon from "@/app/hooks/useParagon";
 
 interface ChildProps {
     user: AuthenticatedConnectUser | null,
@@ -11,20 +12,20 @@ interface ChildProps {
 }
 const Integrations: React.FC<ChildProps> = (props) => {
   const [integrationMetadata, setIntegrationMetadata] = useState<Array<IIntegrationMetadata>>([]);
+  const {user} = useParagon();
 
   useEffect(() => {
-    if(sessionStorage.getItem("jwt")){
-      paragon.authenticate(process.env.NEXT_PUBLIC_PARAGON_PROJECT_ID ?? "", sessionStorage.getItem("jwt") ?? "");
-      const usr = paragon.getUser();
-      if(usr.authenticated){
-        props.setUser(usr);
-      }
+    if(sessionStorage.getItem("jwt") && user.authenticated){
+      props.setUser(user);
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
     setIntegrationMetadata(paragon.getIntegrationMetadata());
   }, [props.user]);
+
+  console.log(props.user);
+  console.log(integrationMetadata);
 
   if(props.user !== null ) {
       return (
@@ -33,6 +34,7 @@ const Integrations: React.FC<ChildProps> = (props) => {
             <div className={"flex justify-center space-x-8"}>
             {integrationMetadata.map((integration: IIntegrationMetadata) => {
               const integrationEnabled = props.user?.authenticated && props.user.integrations[integration.type]?.enabled;
+              console.log(integrationEnabled);
               return (
                 <div key={integration.type}
                      className={"flex space-x-2 border-2 border-gray-300 rounded-xl px-4 py-2 items-center justify-between"}>
@@ -40,7 +42,7 @@ const Integrations: React.FC<ChildProps> = (props) => {
                     <img src={integration.icon} style={{ maxWidth: "30px" }} />
                     <p>{integration.name}</p>
                   </div>
-                  <button className={"text-white bg-blue-700 p-2 rounded-xl hover:bg-blue-400"}
+                  <button className={integrationEnabled ? "text-white bg-green-800 p-2 rounded-xl hover:bg-blue-400" : "text-white bg-blue-700 p-2 rounded-xl hover:bg-blue-400"}
                           onClick={() => paragon.connect(integration.type, {})}>
                     {integrationEnabled ? "Manage" : "Enable"}
                   </button>

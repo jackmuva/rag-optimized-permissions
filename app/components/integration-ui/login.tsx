@@ -25,7 +25,7 @@ const Login: React.FC<ChildProps> = (props) => {
       usernameOrEmail: email,
       password: password
     }
-    await fetch(process.env.NEXT_PUBLIC_AUTH_BACKEND ?? "", {
+    fetch(process.env.NEXT_PUBLIC_AUTH_BACKEND ?? "", {
       method: 'POST',
       headers: {
         Accept: 'application/json',
